@@ -24,4 +24,5 @@ export const DataPacket: React.FC<DataPacketProps> = ({ start, end, speed }) => 
       />
     </circle>
   );
+
 };
