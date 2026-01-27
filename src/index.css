@@ -1,0 +1,68 @@
+@import "tailwindcss"; /* New v4 way */
+
+/* Or if you are sticking with v3 style: */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: dark;
+  background-color: #1e1e1e;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+/* The Dot Grid Pattern for the Node Canvas */
+.canvas-grid {
+  background-image: radial-gradient(circle, #333 1px, transparent 1px);
+  background-size: 30px 30px;
+}
+
+/* Utility to prevent text selection while dragging nodes */
+.select-none {
+  user-select: none;
+}
+
+/* Smooth transition for side panels */
+.panel-transition {
+  transition: width 0.3s ease-in-out;
+}
+
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+@keyframes dash {
+  from {
+    stroke-dashoffset: 20;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Ensure the utility class is available if not using Tailwind's arbitrary values */
+.animate-dash {
+  animation: dash 1s linear infinite;
+}
+
+.animate-follow-path {
+  filter: drop-shadow(0 0 4px #22d3ee);
+  animation: packet-pulse 0.5s infinite alternate;
+}
+
+@keyframes packet-pulse {
+  from { r: 2.5; opacity: 0.8; }
+  to { r: 4; opacity: 1; }
+}
+
+
