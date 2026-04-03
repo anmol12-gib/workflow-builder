@@ -62,7 +62,7 @@ https://workflow-builder-one-wheat.vercel.app/
 
 ## Technical Stack
 
-- **Framework:** React 18 with vite project 
+- **Framework:** React 18 with typescript
 - **State Management:** Zustand with deep persistence and history tracking  
 - **Styling:** Tailwind CSS  
 - **Icons:** Lucide React  
