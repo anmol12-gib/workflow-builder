@@ -16,7 +16,7 @@ export const InteractionLayer: React.FC = () => {
   const [isPanning, setIsPanning] = useState(false);
   const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null);
   const [tempWire, setTempWire] = useState<{ start: Position; end: Position; sourcePortId: string; sourceNodeId: string } | null>(null);
-  const [activePackets, setActivePackets] = useState<{edgeId: string, id: string}[]>([]);
+  const [activePackets, setActivePackets] = useState<{edgeId: string, id: string, value: boolean}[]>([]);
 
   const getPortPosition = (nodeId: string, portId: string): Position => {
     const node = nodes.find(n => n.id === nodeId);
@@ -38,10 +38,13 @@ export const InteractionLayer: React.FC = () => {
   };
 
   useEffect(() => {
-    const handler = (e: any) => {
-      const edgeId = e.detail.edgeId;
+    const handler = (e: Event) => {
+      const customEvent = e as CustomEvent<{ edgeId: string; value?: boolean }>;
+      const edgeId = customEvent.detail?.edgeId;
+      if (!edgeId) return;
+      const value = customEvent.detail?.value ?? true;
       const packetId = `${edgeId}-${Date.now()}`;
-      setActivePackets(prev => [...prev, { edgeId, id: packetId }]);
+      setActivePackets(prev => [...prev, { edgeId, id: packetId, value }]);
       const travelTime = 1000 / simulationSpeed;
       setTimeout(() => {
         setActivePackets(prev => prev.filter(p => p.id !== packetId));
@@ -120,17 +123,24 @@ export const InteractionLayer: React.FC = () => {
       <div style={{ transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`, transformOrigin: '0 0' }}>
         <svg className="absolute inset-0 overflow-visible pointer-events-none" style={{ width: 1, height: 1, zIndex: 1 }}>
           {edges.map(edge => {
-            const sNode = nodes.find(n => n.id === edge.sourceNodeId);
+            const sourceNodeId = edge.sourceNodeId ?? edge.source;
+            const targetNodeId = edge.targetNodeId ?? edge.target;
+            const sourcePortId = edge.sourcePortId;
+            const targetPortId = edge.targetPortId;
+
+            if (!sourceNodeId || !targetNodeId || !sourcePortId || !targetPortId) return null;
+
+            const sNode = nodes.find(n => n.id === sourceNodeId);
             if (!sNode) return null;
-            const startPos = getPortPosition(edge.sourceNodeId, edge.sourcePortId);
-            const endPos = getPortPosition(edge.targetNodeId, edge.targetPortId);
+            const startPos = getPortPosition(sourceNodeId, sourcePortId);
+            const endPos = getPortPosition(targetNodeId, targetPortId);
             const isWireActive = sNode.data.status === 'Processing' || activePackets.some(p => p.edgeId === edge.id);
 
             return (
               <g key={edge.id}>
                 <Wire id={edge.id} start={startPos} end={endPos} isActive={isWireActive} onDelete={removeEdge} />
                 {activePackets.filter(p => p.edgeId === edge.id).map(p => (
-                  <DataPacket key={p.id} start={startPos} end={endPos} speed={simulationSpeed} />
+                  <DataPacket key={p.id} start={startPos} end={endPos} speed={simulationSpeed} value={p.value} />
                 ))}
               </g>
             );

@@ -1,182 +1,163 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useWorkflowStore } from './store';
 import { InteractionLayer } from './components/InteractionLayer';
 import { Properties } from './components/Properties';
 import { Sidebar } from './components/SideBar';
 import { StatusBar } from './components/StatusBar';
 import { ExecutionReport } from './components/ExecutionReport';
+import Dashboard from "./pages/Dashboard";
+import AuthModal from "./components/AuthModal";
 import { 
-  Play, Undo, Redo, Maximize, Grid, Hash, 
-  FilePlus, ZoomIn, ZoomOut, Clock 
+  Undo, Redo, Grid, ZoomIn, ZoomOut, 
+  Play, Pause, StepForward, Plus, Layout, Download, Upload, Save 
 } from 'lucide-react';
 
 export default function App() {
   const { 
-    nodes, undo, redo, createNewGraph, toggleGrid, 
-    toggleSnap, gridEnabled, snapToGrid, exportJSON, 
-    executeGraph, setViewport, setSelectedNode, zoomIn, zoomOut,
-    isHalting, haltingTime, simulationSpeed, setSimulationSpeed, importJSON
+    currentUser, isHydrated, saveProject, undo, redo, 
+    createNewGraph, toggleGrid, executeGraph, zoomIn, 
+    zoomOut, exportJSON, importJSON, setMousePosition,
+    pauseSimulation, resumeSimulation, stepSimulation,
+    isSimulationRunning, isSimulationPaused
   } = useWorkflowStore();
 
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [view, setView] = useState<"dashboard" | "builder">("dashboard");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const fitToScreen = () => {
-    if (nodes.length === 0) return setViewport({ x: 0, y: 0, zoom: 1 });
-    
-    const minX = Math.min(...nodes.map(n => n.position.x));
-    const maxX = Math.max(...nodes.map(n => n.position.x + 180));
-    const minY = Math.min(...nodes.map(n => n.position.y));
-    const maxY = Math.max(...nodes.map(n => n.position.y + 120));
 
-    setViewport({ 
-      x: (window.innerWidth / 2) - ((minX + maxX) / 2), 
-      y: (window.innerHeight / 2) - ((minY + maxY) / 2), 
-      zoom: 1 
-    });
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const content = event.target?.result as string;
-      importJSON(content);
+  useEffect(() => {
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      setMousePosition({ x: e.clientX, y: e.clientY });
     };
-    reader.readAsText(file);
-    e.target.value = '';
-  };
+    window.addEventListener('mousemove', handleGlobalMouseMove);
+    return () => window.removeEventListener('mousemove', handleGlobalMouseMove);
+  }, [setMousePosition]);
 
-  return (
-    <div className="flex flex-col h-screen w-screen bg-[#0f172a] text-slate-300 overflow-hidden select-none font-sans">
-      {/* Header Section */}
-      <header className="h-14 border-b border-slate-800 bg-[#0f172a]/80 backdrop-blur-md flex items-center justify-between px-6 z-20">
-        <div className="flex items-center">
-          <span className="font-bold text-cyan-500 text-xs uppercase tracking-widest mr-6">Cyberflow v1</span>
-          
-          <div className="flex items-center border-l border-slate-800 ml-4 pl-4 gap-1">
-            <button onClick={createNewGraph} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-all">
-              <FilePlus size={16}/>
-            </button>
-            
-            <div className="h-4 w-[1px] bg-slate-800 mx-2" />
-            
-            <button onClick={zoomOut} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-all">
-              <ZoomOut size={16}/>
-            </button>
-            <button onClick={fitToScreen} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-all">
-              <Maximize size={16}/>
-            </button>
-            <button onClick={zoomIn} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-all">
-              <ZoomIn size={16}/>
-            </button>
+  if (!isHydrated) return null;
 
-            <div className="h-4 w-[1px] bg-slate-800 mx-2" />
+  // Handlers for Navigation
+  const handleOpenProject = () => setView("builder");
+  const handleNewProject = () => setView("builder");
 
-            <button onClick={undo} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-all">
-              <Undo size={16}/>
-            </button>
-            <button onClick={redo} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-all">
-              <Redo size={16}/>
-            </button>
-
-            <div className="h-4 w-[1px] bg-slate-800 mx-2" />
-
-            <button 
-              onClick={toggleGrid} 
-              className={`p-2 rounded-lg transition-all ${gridEnabled ? 'bg-cyan-500/10 text-cyan-400' : 'text-slate-500 hover:bg-slate-800'}`}
-            >
-              <Grid size={16}/>
-            </button>
-            <button 
-              onClick={toggleSnap} 
-              className={`p-2 rounded-lg transition-all ${snapToGrid ? 'bg-cyan-500/10 text-cyan-400' : 'text-slate-500 hover:bg-slate-800'}`}
-            >
-              <Hash size={16}/>
-            </button>
+  const BuilderUI = (
+    <div className="flex flex-col h-screen w-screen bg-[#020617] text-slate-300 overflow-hidden select-none font-sans">
+      <header className="h-14 border-b border-white/5 bg-[#050505]/80 backdrop-blur-md flex items-center justify-between px-6 z-10">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2">
+            <Layout size={18} className="text-blue-500" />
+            <span className="font-black text-white text-[10px] uppercase tracking-[0.3em] italic">CYBERFLOW V1</span>
           </div>
+          
+          <nav className="flex items-center gap-1 bg-white/[0.03] p-1 rounded-xl border border-white/5">
+            <button onClick={() => setView("dashboard")} className="px-4 py-1.5 text-[9px] font-black text-slate-500 hover:text-white uppercase tracking-widest transition-all rounded-lg hover:bg-white/5">Dashboard</button>
+            <button className="px-4 py-1.5 text-[9px] font-black text-blue-500 bg-blue-500/10 uppercase tracking-widest rounded-lg">Editor</button>
+          </nav>
 
-          {/* HALTING TIMER INTEGRATION */}
-          {isHalting && (
-            <div className="flex items-center gap-3 px-4 py-1.5 bg-amber-500/10 border border-amber-500/30 rounded-full animate-pulse ml-6">
-              <Clock size={12} className="text-amber-500" />
-              <span className="text-[9px] font-black text-amber-500 uppercase tracking-widest">
-                System Halting: {haltingTime.toFixed(1)}s
-              </span>
+          <div className="h-4 w-px bg-white/10 mx-2" />
+
+          <div className="flex items-center gap-1">
+            <button onClick={undo} className="p-2 hover:bg-white/5 rounded-lg text-slate-400 hover:text-white transition-colors"><Undo size={14}/></button>
+            <button onClick={redo} className="p-2 hover:bg-white/5 rounded-lg text-slate-400 hover:text-white transition-colors"><Redo size={14}/></button>
+            <button onClick={toggleGrid} className="p-2 hover:bg-white/5 rounded-lg text-slate-400 hover:text-white transition-colors"><Grid size={14}/></button>
+            <div className="flex items-center gap-1 ml-2 bg-white/5 rounded-lg p-1">
+              <button onClick={zoomOut} className="p-1 hover:text-white transition-colors"><ZoomOut size={13}/></button>
+              <button onClick={zoomIn} className="p-1 hover:text-white transition-colors"><ZoomIn size={13}/></button>
             </div>
-          )}
-        </div>
-
-        <div className="flex items-center">
-          <div className="flex items-center gap-3 border-l border-slate-800 ml-4 pl-4 pr-4">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Speed: {simulationSpeed}x</span>
-            <input 
-              type="range" 
-              min="0.5" 
-              max="3" 
-              step="0.5" 
-              value={simulationSpeed}
-              onChange={(e) => setSimulationSpeed(parseFloat(e.target.value))}
-              className="w-20 h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-500"
-            />
-          </div>
-          
-          <div className="flex items-center gap-2 border-l border-slate-800 ml-4 pl-4">
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              className="hidden" 
-              accept=".json" 
-              onChange={handleFileChange} 
-            />
-            
-            <button 
-              onClick={() => fileInputRef.current?.click()} 
-              className="text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-cyan-400 transition-colors"
-            >
-              Import
-            </button>
-
-            <span className="text-slate-700 text-[10px] font-bold">/</span>
-
-            <button 
-              onClick={exportJSON} 
-              className="text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-cyan-400 transition-colors"
-            >
-              Export
-            </button>
-
-            <button onClick={executeGraph} className="flex items-center gap-2 px-6 py-2 bg-cyan-600 text-white rounded-md text-[10px] font-black uppercase tracking-widest hover:bg-cyan-500 transition-all active:scale-95 shadow-[0_0_20px_rgba(6,182,212,0.3)] ml-4" > 
-              <Play size={12} fill="currentColor"/> Run Logic 
-            </button>
           </div>
         </div>
+
+        
+
+
+        <div className="flex items-center gap-4">
+  <button onClick={createNewGraph} className="flex items-center gap-2 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-colors">
+    <Plus size={14} /> New Node
+  </button>
+
+  {/* Only Adding Icons here - calling store functions directly */}
+  <div className="flex items-center gap-1 mr-2">
+    <button 
+      onClick={exportJSON}
+      className="p-2.5 hover:bg-white/5 rounded-xl text-slate-400 hover:text-white transition-all border border-transparent hover:border-white/10"
+    >
+      <Download size={16} />
+    </button>
+    
+    <button 
+      onClick={() => fileInputRef.current?.click()}
+      className="p-2.5 hover:bg-white/5 rounded-xl text-slate-400 hover:text-white transition-all border border-transparent hover:border-white/10"
+    >
+      <Upload size={16} />
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        className="hidden" 
+        accept=".json"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (f) => importJSON(f.target?.result as string);
+            reader.readAsText(file);
+          }
+        }}
+      />
+    </button>
+  </div>
+
+  <button 
+    onClick={() => {
+      const name = prompt("Project Name:", "My Workflow");
+      if (name) saveProject(name);
+    }}
+    className="flex items-center gap-2 px-4 py-2 bg-emerald-600/10 hover:bg-emerald-600 border border-emerald-500/20 hover:border-emerald-500 text-emerald-500 hover:text-white transition-all rounded-xl text-[10px] font-black uppercase tracking-widest"
+  >
+    <Save size={14} /> Save to Dashboard
+  </button>
+
+  {!isSimulationRunning ? (
+    <button onClick={executeGraph} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-blue-600/20">
+      <Play size={12} fill="currentColor" /> Initialize Simulation
+    </button>
+  ) : (
+    <div className="flex items-center gap-2">
+      {isSimulationPaused ? (
+        <button onClick={resumeSimulation} className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all">
+          <Play size={12} fill="currentColor" /> Resume
+        </button>
+      ) : (
+        <button onClick={pauseSimulation} className="flex items-center gap-2 bg-amber-600 hover:bg-amber-500 text-white px-4 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all">
+          <Pause size={12} /> Pause
+        </button>
+      )}
+
+      <button onClick={stepSimulation} className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-white px-4 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all">
+        <StepForward size={12} /> Step
+      </button>
+    </div>
+  )}
+</div>
       </header>
 
-      {/* Main Workspace */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
         <Sidebar />
-        <main 
-          className="relative flex-1 bg-[#020617] overflow-hidden" 
-          onMouseDown={(e) => {
-            if (e.target === e.currentTarget) setSelectedNode(null);
-          }}
-        >
-          <InteractionLayer />
-          {nodes.length === 0 && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <p className="text-[10px] font-bold uppercase tracking-[0.5em] text-slate-800 animate-pulse">
-                System Ready / Deploy Nodes
-              </p>
-            </div>
-          )}
-        </main>
+        <main className="relative flex-1 bg-[#020617]"><InteractionLayer /></main>
         <Properties />
         <ExecutionReport />
       </div>
-
       <StatusBar />
+    </div>
+  );
+
+  return (
+    <div className="w-screen min-h-screen bg-[#020617] overflow-hidden relative">
+      {!currentUser ? <AuthModal onClose={() => {}} /> : (
+        <div className="w-full h-full">
+          {view === "dashboard" ? (
+            <Dashboard onOpenProject={handleOpenProject} onNewProject={handleNewProject} />
+          ) : BuilderUI}
+        </div>
+      )}
     </div>
   );
 }

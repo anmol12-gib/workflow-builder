@@ -38,10 +38,14 @@ export interface Node {
  */
 export interface Edge {
   id: string;
-  sourceNodeId: string;
-  sourcePortId: string;
-  targetNodeId: string;
-  targetPortId: string;
+  // Custom workflow edge shape
+  sourceNodeId?: string;
+  sourcePortId?: string;
+  targetNodeId?: string;
+  targetPortId?: string;
+  // React Flow-compatible edge shape
+  source?: string;
+  target?: string;
 }
 
 /**
@@ -64,3 +68,21 @@ export interface LocalUIState {
 }
 
 
+
+export interface User {
+  id: string;
+  email: string;
+  displayName?: string;
+  phone?: string;
+  university?: string;
+  bio?: string;
+  avatar?: string;
+  skills?: string;
+}
+
+export interface Tab {
+  id: string;
+  label: string;
+  nodes: Node[];   // later you can replace with your NodeData type
+  edges: Edge[];   // later replace with EdgeData type
+}

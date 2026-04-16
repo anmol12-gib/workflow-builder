@@ -1,68 +1,45 @@
-@import "tailwindcss"; /* New v4 way */
-
-/* Or if you are sticking with v3 style: */
+@import "tailwindcss";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-  color-scheme: dark;
-  background-color: #1e1e1e;
-}
+/* ... keep your previous imports ... */
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
   min-height: 100vh;
-  overflow: hidden;
+  /* 🔥 IMPORTANT: This is why it wasn't scrolling. Change from 'hidden' to 'initial' */
+  overflow: initial !important; 
+  background: #030303;
 }
 
-/* The Dot Grid Pattern for the Node Canvas */
-.canvas-grid {
-  background-image: radial-gradient(circle, #333 1px, transparent 1px);
-  background-size: 30px 30px;
+/* 🔥 THE SCANNED LINE ANIMATION */
+@keyframes scan {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(200%); }
 }
 
-/* Utility to prevent text selection while dragging nodes */
-.select-none {
-  user-select: none;
+/* 🔥 IMPROVED SCROLLBAR FOR MODERN BROWSERS */
+::-webkit-scrollbar {
+  width: 8px;
 }
 
-/* Smooth transition for side panels */
-.panel-transition {
-  transition: width 0.3s ease-in-out;
+::-webkit-scrollbar-track {
+  background: #030303;
 }
 
-.scrollbar-hide::-webkit-scrollbar { display: none; }
-.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-
-@keyframes dash {
-  from {
-    stroke-dashoffset: 20;
-  }
-  to {
-    stroke-dashoffset: 0;
-  }
+::-webkit-scrollbar-thumb {
+  background: #1a1a1a;
+  border-radius: 20px;
+  border: 2px solid #030303; /* Creates a 'padding' effect */
 }
 
-/* Ensure the utility class is available if not using Tailwind's arbitrary values */
-.animate-dash {
-  animation: dash 1s linear infinite;
+::-webkit-scrollbar-thumb:hover {
+  background: #2563eb; /* Blue on hover to match your theme */
 }
 
-.animate-follow-path {
-  filter: drop-shadow(0 0 4px #22d3ee);
-  animation: packet-pulse 0.5s infinite alternate;
+/* For Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #1a1a1a #030303;
 }
-
-@keyframes packet-pulse {
-  from { r: 2.5; opacity: 0.8; }
-  to { r: 4; opacity: 1; }
-}
-
-

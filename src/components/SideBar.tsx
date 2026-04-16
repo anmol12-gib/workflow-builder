@@ -1,30 +1,48 @@
 import React from 'react';
 import { useWorkflowStore } from '../store';
-import { Zap, Cpu, PlayCircle, Settings, Clock, Globe, Database, CheckCircle, Activity, X } from 'lucide-react';
+import { Zap, Cpu, PlayCircle, Settings, Clock, Globe, Database, CheckCircle } from 'lucide-react';
+
+interface NodeLibraryItem {
+  label: string;
+  type: string;
+  icon: React.ReactNode;
+  color: string;
+  inputsCount?: number;
+  outputsCount?: number;
+  params?: Record<string, any>;
+}
 
 export const Sidebar: React.FC = () => {
   const { addNode, viewport } = useWorkflowStore();
 
-  const nodeLibrary = [
+  const nodeLibrary: NodeLibraryItem[] = [
     { label: 'Start Trigger', type: 'trigger', icon: <Zap size={14}/>, color: 'cyan' },
     { label: 'Webhook', type: 'trigger', icon: <Globe size={14}/>, color: 'cyan' },
-    { label: 'Logic Gate', type: 'logic', icon: <Cpu size={14}/>, color: 'purple' },
+    { label: 'AND Gate', type: 'logic', icon: <Cpu size={14}/>, color: 'purple', inputsCount: 2, outputsCount: 1, params: { gateType: 'AND', a: false, b: false } },
+    { label: 'OR Gate', type: 'logic', icon: <Cpu size={14}/>, color: 'purple', inputsCount: 2, outputsCount: 1, params: { gateType: 'OR', a: false, b: false } },
+    { label: 'XOR Gate', type: 'logic', icon: <Cpu size={14}/>, color: 'purple', inputsCount: 2, outputsCount: 2, params: { gateType: 'XOR', a: false, b: false } },
+    { label: 'NOT Gate', type: 'logic', icon: <Cpu size={14}/>, color: 'purple', inputsCount: 1, outputsCount: 1, params: { gateType: 'NOT', input: false } },
+    { label: 'NAND Gate', type: 'logic', icon: <Cpu size={14}/>, color: 'purple', inputsCount: 2, outputsCount: 1, params: { gateType: 'NAND', a: false, b: false } },
+    { label: 'NOR Gate', type: 'logic', icon: <Cpu size={14}/>, color: 'purple', inputsCount: 2, outputsCount: 1, params: { gateType: 'NOR', a: false, b: false } },
     { label: 'Time Delay', type: 'logic', icon: <Clock size={14}/>, color: 'purple' },
     { label: 'API Action', type: 'action', icon: <PlayCircle size={14}/>, color: 'emerald' },
     { label: 'DB Query', type: 'action', icon: <Database size={14}/>, color: 'emerald' },
     { label: 'Utility Box', type: 'utility', icon: <Settings size={14}/>, color: 'slate' },
-    { type: 'action', label: 'Finish Node', icon: <CheckCircle size={14} />, color: 'emerald' }
+    { type: 'action', label: 'Finish Node', icon: <CheckCircle size={14} />, color: 'emerald', inputsCount: 1, outputsCount: 0 }
   ];
 
-  const handleCreateNode = (item: typeof nodeLibrary[0]) => {
+  const handleCreateNode = (item: NodeLibraryItem) => {
     const id = `${item.type}-${Date.now()}`;
+    const inputsCount = item.inputsCount ?? (item.type === 'trigger' ? 0 : 1);
+    const outputsCount = item.outputsCount ?? 1;
+
     addNode({
       id, type: item.type,
       position: { x: (window.innerWidth / 2 - viewport.x - 300) / viewport.zoom, y: (window.innerHeight / 2 - viewport.y - 60) / viewport.zoom },
-      data: { label: item.label, status: 'IDLE' },
+      data: { label: item.label, status: 'IDLE', params: item.params ? { ...item.params } : {} },
       width: 180, height: 120,
-      inputs: item.type === 'trigger' ? [] : [{ id: `${id}-in`, type: 'input' }],
-      outputs: [{ id: `${id}-out`, type: 'output' }],
+      inputs: Array.from({ length: inputsCount }, (_, idx) => ({ id: `${id}-in-${idx + 1}`, type: 'input' as const })),
+      outputs: Array.from({ length: outputsCount }, (_, idx) => ({ id: `${id}-out-${idx + 1}`, type: 'output' as const })),
     });
   };
 

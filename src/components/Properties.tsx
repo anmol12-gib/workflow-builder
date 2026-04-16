@@ -12,7 +12,7 @@ export const Properties: React.FC = () => {
   // Sync local state with selected node
   useEffect(() => {
     if (selectedNode) {
-      // If params are empty, set to empty string to allow placeholder to show
+      
       const currentParams = selectedNode.data.params;
       const hasParams = currentParams && Object.keys(currentParams).length > 0;
       setJsonValue(hasParams ? JSON.stringify(currentParams, null, 2) : '');
