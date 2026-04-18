@@ -1,4 +1,4 @@
-# Cyberflow v1: Interactive Node-Based Workflow Builder
+# Workflow Builder (Prototype of Cyberflow V1)
 
 Cyberflow is a high-performance, interactive visual scripting tool designed for building and simulating complex data-driven workflows.  
 Built as part of **Project 3: Advanced Frontend Engineering**, it features a custom execution engine, real-time metrics, and advanced graph logic.
